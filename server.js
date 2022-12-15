@@ -1,27 +1,37 @@
-const express = require('express'),
-    ws = require('ws'),
-    http = require('http'),
-    app = express();
-// use express static to deliver resources HTML, CSS, JS, etc)
-// from the public folder
-app.use(express.static('public'));
-var httpServer = http.createServer(options, app).listen(3355);
-console.log("The HTTP server is up and running");
-var wsServer = new ws.Server({server: httpServer});
-wss.on('connection', function (client) {
-    console.log("A new client was connected.");
-    client.on('message', function (message) { // incoming client
-        wss.broadcast(message, client);
+const express = require("express");
+const app = express();
+const server = require("http").Server(app);
+const { v4: uuidv4 } = require("uuid");
+app.set("view engine", "ejs");
+const io = require("socket.io")(server, {
+  cors: {
+    origin: '*'
+  }
 });
+const { ExpressPeerServer } = require("peer");
+const peerServer = ExpressPeerServer(server, {
+  debug: true,
 });
-// Define a method to broadcast to all clients
-wss.broadcast = function (data, exclude) {
-    var i = 0, n = this.clients ? this.clients.length : 0, client = null;
-    if (n &lt; 1) return;
-    for (; i &lt; n; i++) {
-        client = this.clients[i];
-        if (client === exclude) continue;
-        if (client.readyState === client.OPEN) client.send(data);
-        else console.error('Error: the client state is ' +     client.readyState);
-}
-};
+
+app.use("/peerjs", peerServer);
+app.use(express.static("public"));
+
+app.get("/", (req, res) => {
+  res.redirect(`/${uuidv4()}`);
+});
+
+app.get("/:room", (req, res) => {
+  res.render("room", { roomId: req.params.room });
+});
+
+io.on("connection", (socket) => {
+  socket.on("join-room", (roomId, userId, userName) => {
+    socket.join(roomId);
+    socket.to(roomId).broadcast.emit("user-connected", userId);
+    socket.on("message", (message) => {
+      io.to(roomId).emit("createMessage", message, userName);
+    });
+  });
+});
+
+server.listen(process.env.PORT || 3030);
