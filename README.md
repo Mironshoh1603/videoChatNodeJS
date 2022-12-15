@@ -2,7 +2,7 @@
 
 Video-chat-v1 is a video chat app that makes it easy to groups up with people you want to meet
 
-![IMG]([./video-chat.png](https://github.com/itstaranarora/video-chat-v1/raw/master/video-chat.png))
+![alt text](https://github.com/itstaranarora/video-chat-v1/raw/master/video-chat.png))
 
 This app is build using NodeJS, Socket.io, and Peerjs(WebRTC)
 
